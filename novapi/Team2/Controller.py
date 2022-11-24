@@ -273,7 +273,7 @@ def MoveModule():
         hand_mover(0,-100*10,100*10)
     
 
-def AutoController_Angle_N_Time_N_Distance_N_Motor_N_Inverse_B (Angle, Time, Distance, Motor, inverse):
+def autoController (Angle, Time, Distance, Motor, inverse):
     EM1.set_speed(0)
     EM2.set_speed(0)
     localdistance = Distance
@@ -303,43 +303,43 @@ def AutoController_Angle_N_Time_N_Distance_N_Motor_N_Inverse_B (Angle, Time, Dis
         EM1.set_speed(0)
         EM2.set_speed(0)
 
-def Rotate_N_Time_N_ARV_S (Angle, Time, Dir):
+def autoRotate (Angle, Time, Dir):
     if Dir == 'Left':
-        AutoController_Angle_N_Time_N_Distance_N_Motor_N_Inverse_B(Angle, Time, 0, 2, 50 == 50)
+        autoController(Angle, Time, 0, 2, 50 == 50)
 
     if Dir == 'Right':
-        AutoController_Angle_N_Time_N_Distance_N_Motor_N_Inverse_B(Angle, Time, 0, 1, 1 == 50)
+        autoController(Angle, Time, 0, 1, 1 == 50)
 
-def Walk_N_N_B (Distance, Time, Inverse):
-    AutoController_Angle_N_Time_N_Distance_N_Motor_N_Inverse_B(0, Time, Distance, 1, Inverse)
-    AutoController_Angle_N_Time_N_Distance_N_Motor_N_Inverse_B(0, Time, Distance, 2, Inverse)
+def autoWalk (Distance, Time, Inverse):
+    autoController(0, Time, Distance, 1, Inverse)
+    autoController(0, Time, Distance, 2, Inverse)
     
 def testAuto(): # Auto functions check
-    Rotate_N_Time_N_ARV_S(17.39, 0.5, 'Left')
-    Rotate_N_Time_N_ARV_S(-17.39, 0.5, 'Left')
+    autoRotate(17.39, 0.5, 'Left')
+    autoRotate(-17.39, 0.5, 'Left')
     time.wait(3)
-    Walk_N_N_B(1, 1, None)
-    Walk_N_N_B(1, 1, True)
+    autoWalk(1, 1, None)
+    autoWalk(1, 1, True)
 
 def autoshoot (): # LEFT
     time.sleep(0.001)
-    Rotate_N_Time_N_ARV_S(17.39, 0.5, 'Left')
-    Walk_N_N_B(0.87, 1, None)
+    autoRotate(17.39, 0.5, 'Left')
+    autoWalk(0.87, 1, None)
     power_expand_board.set_power("DC3", 100)
     EM3.set_power(-100)
     time.sleep(2)
     power_expand_board.set_power("DC3", 0)
     EM3.set_power(0)
-    Rotate_N_Time_N_ARV_S(-17.39, 0.5, 'Left')
-    Walk_N_N_B(-0.1, 0.5, None)
+    autoRotate(-17.39, 0.5, 'Left')
+    autoWalk(-0.1, 0.5, None)
     # start
-    Rotate_N_Time_N_ARV_S(-5.19, 0.5, 'Left')
+    autoRotate(-5.19, 0.5, 'Left')
     EM3.set_power(-100)
     power_expand_board.set_power("BL1", velocity_to_power(vel_from_angle_distance(5.19,291.5)))
     power_expand_board.set_power("BL2", velocity_to_power(vel_from_angle_distance(5.19,291.5)))
     # start (STABLE)
-    Rotate_N_Time_N_ARV_S(5.19, 0.5, 'Left')
-    Walk_N_N_B(0.1, 0.5, None)
+    autoRotate(5.19, 0.5, 'Left')
+    autoWalk(0.1, 0.5, None)
     power_expand_board.set_power("BL1", 0)
     power_expand_board.set_power("BL2", 0)
     power_expand_board.set_power("DC3", 100)
@@ -347,15 +347,15 @@ def autoshoot (): # LEFT
     time.sleep(2)
     power_expand_board.set_power("DC3", 0)
     EM3.set_power(0)
-    Walk_N_N_B(-0.1, 0.5, None)
+    autoWalk(-0.1, 0.5, None)
     # start
-    Rotate_N_Time_N_ARV_S(5.19, 0.5, 'Left')
+    autoRotate(5.19, 0.5, 'Left')
     EM3.set_power(-100)
     power_expand_board.set_power("BL1", velocity_to_power(vel_from_angle_distance(5.19,291.5)))
     power_expand_board.set_power("BL2", velocity_to_power(vel_from_angle_distance(5.19,291.5)))
     # start (STABLE)
-    Rotate_N_Time_N_ARV_S(-5.19, 0.5, 'Left')
-    Walk_N_N_B(0.1, 0.5, None)
+    autoRotate(-5.19, 0.5, 'Left')
+    autoWalk(0.1, 0.5, None)
     power_expand_board.set_power("BL1", 0)
     power_expand_board.set_power("BL2", 0)
     power_expand_board.set_power("DC3", 100)
@@ -363,15 +363,15 @@ def autoshoot (): # LEFT
     time.sleep(2)
     power_expand_board.set_power("DC3", 0)
     EM3.set_power(0)
-    Walk_N_N_B(-0.1, 0.5, None)
+    autoWalk(-0.1, 0.5, None)
     # start
-    Rotate_N_Time_N_ARV_S(12.97, 0.5, 'Left')
+    autoRotate(12.97, 0.5, 'Left')
     EM3.set_power(-100)
     power_expand_board.set_power("BL1", velocity_to_power(vel_from_angle_distance(12.97,291.5)))
     power_expand_board.set_power("BL2", velocity_to_power(vel_from_angle_distance(12.97,291.5)))
     # start (STABLE)
-    Rotate_N_Time_N_ARV_S(-12.97, 0.5, 'Left')
-    Walk_N_N_B(0.1, 0.5, None)
+    autoRotate(-12.97, 0.5, 'Left')
+    autoWalk(0.1, 0.5, None)
     power_expand_board.set_power("BL1", 0)
     power_expand_board.set_power("BL2", 0)
     power_expand_board.set_power("DC3", 100)
@@ -379,15 +379,15 @@ def autoshoot (): # LEFT
     time.sleep(2)
     power_expand_board.set_power("DC3", 0)
     EM3.set_power(0)
-    Walk_N_N_B(-0.1, 0.5, None)
+    autoWalk(-0.1, 0.5, None)
     # start
-    Rotate_N_Time_N_ARV_S(23.87, 0.5, 'Left')
+    autoRotate(23.87, 0.5, 'Left')
     EM3.set_power(-100)
     power_expand_board.set_power("BL1", velocity_to_power(vel_from_angle_distance(23.87,291.5)))
     power_expand_board.set_power("BL2", velocity_to_power(vel_from_angle_distance(23.87,291.5)))
     # start (STABLE)
-    Rotate_N_Time_N_ARV_S(-23.87, 0.5, 'Left')
-    Walk_N_N_B(0.1, 0.5, None)
+    autoRotate(-23.87, 0.5, 'Left')
+    autoWalk(0.1, 0.5, None)
     power_expand_board.set_power("BL1", 0)
     power_expand_board.set_power("BL2", 0)
     power_expand_board.set_power("DC3", 100)
@@ -395,15 +395,15 @@ def autoshoot (): # LEFT
     time.sleep(2)
     power_expand_board.set_power("DC3", 0)
     EM3.set_power(0)
-    Walk_N_N_B(-0.1, 0.5, None)
+    autoWalk(-0.1, 0.5, None)
     # start
-    Rotate_N_Time_N_ARV_S(31.22, 0.5, 'Left')
+    autoRotate(31.22, 0.5, 'Left')
     EM3.set_power(-100)
     power_expand_board.set_power("BL1", velocity_to_power(vel_from_angle_distance(31.22,291.5)))
     power_expand_board.set_power("BL2", velocity_to_power(vel_from_angle_distance(31.22,291.5)))
     # start (STABLE)
-    Rotate_N_Time_N_ARV_S(-31.22, 0.5, 'Left')
-    Walk_N_N_B(0.1, 0.5, None)
+    autoRotate(-31.22, 0.5, 'Left')
+    autoWalk(0.1, 0.5, None)
     power_expand_board.set_power("BL1", 0)
     power_expand_board.set_power("BL2", 0)
     power_expand_board.set_power("DC3", 100)
@@ -411,15 +411,15 @@ def autoshoot (): # LEFT
     time.sleep(2)
     power_expand_board.set_power("DC3", 0)
     EM3.set_power(0)
-    Walk_N_N_B(-0.1, 0.5, None)
+    autoWalk(-0.1, 0.5, None)
     # start
-    Rotate_N_Time_N_ARV_S(38.87, 0.5, 'Left')
+    autoRotate(38.87, 0.5, 'Left')
     EM3.set_power(-100)
     power_expand_board.set_power("BL1", velocity_to_power(vel_from_angle_distance(38.87,291.5)))
     power_expand_board.set_power("BL2", velocity_to_power(vel_from_angle_distance(38.87,291.5)))
     # start (STABLE)
-    Rotate_N_Time_N_ARV_S(-38.87, 0.5, 'Left')
-    Walk_N_N_B(0.1, 0.5, None)
+    autoRotate(-38.87, 0.5, 'Left')
+    autoWalk(0.1, 0.5, None)
 
 # ================= Main Program ===================== #
 

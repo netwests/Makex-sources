@@ -29,14 +29,12 @@ SERVO5 = smartservo_class("M5", "INDEX1")
 SERVO6 = smartservo_class("M6", "INDEX1")
 
 # map BASIC controls
-BallBeltHR ='N3'
 BallBeltTG = 'N1'
 BallBeltINV = 'N2'
 AutoMode = '+'
 RotateL = 'L1'
 RotateR = 'R1'
 ShootTG = 'L2'
-ShootHD = 'R2'
 #ArmUp = 'Left' 
 #ArmDown = 'Right'
 BPUp = 'Up'
@@ -56,8 +54,8 @@ BPDown =  ' Down'
     DPAD DOWN: - Brushless Power // Ice's power manager
 
     BTN1:  Ball Belt Toggle
-    BTN2: -
-    BTN3: Invert all belt directions
+    BTN2: Invert all belt directions
+    BTN3: - 
     BTN4: -
 
     L1: Rotate Bot Left
@@ -121,35 +119,13 @@ def distance_and_time_to_speed(x,t) :
 #y = 0.19
 
 # ================= The Mechanics ===================== #
-def FlowModule(Mode):
+def FlowListener(Mode):
     global flow,inverse2
-
-    if Mode == 0: # <Hold> Ball Belt
-        while not (not gamepad.is_key_pressed(BallBeltH)):
-            time.sleep(0.001)
-            EM3.set_power(90)
-            power_expand_board.set_power("DC3", 100)
-            MoveModule()
-            ShooterModule_N()
-        EM3.set_power(0)
-        power_expand_board.set_power("DC3", 0)
-
     if Mode == 1: # <Toggle> Ball Belt
         if flow == 0:
             flow = 1
         else:
-            flow = 0
-    
-    if Mode == 2: # <Hold,Reverse> Ball Belt
-        while not (not gamepad.is_key_pressed(BallBeltHR)):
-            time.sleep(0.001)
-            EM3.set_power(-90)
-            power_expand_board.set_power("DC3", -100)
-            MoveModule()
-            ShooterModule_N()
-
-        EM3.set_power(0)
-        power_expand_board.set_power("DC3", 0)
+            flow = 0   
 
 def Mover(W1=0, W2=0,angle=90):
     EM1.move(angle,W1)
@@ -265,22 +241,10 @@ def AutomaticMode():
         #BotMover() # Reset
     '''
 
-def ShooterModule_N(Mode):
+def ShooterListener(Mode):
     global BP, brushless
     # Mode 0: Manual Hold
     # Mode 1: Toggle Shoot
-    '''
-    if Mode == 0:
-        power_expand_board.set_power("BL1", BP)
-        power_expand_board.set_power("BL2", BP)
-        #power_expand_board.set_power("DC3", -50)
-        while not not gamepad.is_key_pressed(ShootHD):
-            pass
-
-        power_expand_board.stop("BL1")
-        power_expand_board.stop("BL2")
-        #power_expand_board.stop("DC3")
-    '''
     if Mode == 1:
         if brushless == 0:
             brushless = 1
@@ -292,9 +256,6 @@ def ShooterModule_N(Mode):
         while not not gamepad.is_key_pressed(ShootTG):
             pass
 
-        while not not gamepad.is_key_pressed(ShootHD):
-            pass
-
 def MoveModule():
     EM1.set_power(0.8*(gamepad.get_joystick("Ly")+(gamepad.get_joystick("Lx")))*inverse/1.5)
     EM2.set_power(-0.8*(gamepad.get_joystick("Ly")-(gamepad.get_joystick("Lx")))*inverse/1.5)
@@ -302,11 +263,10 @@ def MoveModule():
     #rotating a hand 
     hand_mover(gamepad.get_joystick("Rx"),0,0)
 
-    #griping the hand
-    #hand_mover(0,gamepad.get_joystick("Ry"),(-1) *gamepad.get_joystick("Ry"))
-
+    # Move hand up/down
     power_expand_board.set_power("DC2",gamepad.get_joystick("Ry")*-1)
 
+    # Hand gripper
     if gamepad.is_key_pressed('Left'):
         hand_mover(0,100*10,-100*10)
     if gamepad.is_key_pressed('Right'):
@@ -354,7 +314,7 @@ def Walk_N_N_B (Distance, Time, Inverse):
     AutoController_Angle_N_Time_N_Distance_N_Motor_N_Inverse_B(0, Time, Distance, 1, Inverse)
     AutoController_Angle_N_Time_N_Distance_N_Motor_N_Inverse_B(0, Time, Distance, 2, Inverse)
     
-def testAuto() :
+def testAuto(): # Auto functions check
     Rotate_N_Time_N_ARV_S(17.39, 0.5, 'Left')
     Rotate_N_Time_N_ARV_S(-17.39, 0.5, 'Left')
     time.wait(3)
@@ -484,10 +444,9 @@ while True:
         EM1.set_power(0)
         EM2.set_power(0)
 
-    if gamepad.is_key_pressed(ShootTG): # Toggle Shoot (Low)
-        ShooterModule_N(1)
+    if gamepad.is_key_pressed(ShootTG): # Toggle Shoot
+        ShooterListener(1)
         
-
     if gamepad.is_key_pressed(BPUp): # Brushless power up
         if BP == 25:
             BP = 40
@@ -502,7 +461,7 @@ while True:
    
     if gamepad.is_key_pressed(BallBeltTG): # Ball Belt Clockwise <Toggle>
         time.sleep(0.001)
-        FlowModule(1)
+        FlowListener(1)
         while not not gamepad.is_key_pressed(BallBeltTG):
             pass
 
@@ -517,7 +476,7 @@ while True:
             manual_automatic_mode = 0
             autoshoot()
     
-    if gamepad.is_key_pressed('N3'): # Rotate Bot Left
+    if gamepad.is_key_pressed('N3'): # Rotate ball belt manually <Hold>
         while not not gamepad.is_key_pressed('N3'):
             time.sleep(0.001)
             EM3.set_power(inverse2*100)

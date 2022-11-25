@@ -1,10 +1,12 @@
 # codes make you cry
 import novapi
 import math
+import random
 from mbuild import gamepad
 from mbuild.encoder_motor import encoder_motor_class
 from mbuild import power_expand_board
 from mbuild.smartservo import smartservo_class
+from mbuild.ranging_sensor import ranging_sensor_class
 
 # initialize mechanic variables
 BP = 40
@@ -13,13 +15,13 @@ flow = 0
 maxspeedi = 0.25
 brushless = 0
 manual_automatic_mode = 1
-inverse = -1 # 1 to disable
+inverse = 1 # 1 to disable
 inverse2 = 1
 
 # new class
-EM1 = encoder_motor_class("M1", "INDEX1") # FRONT LEFT WHEEL
-EM2 = encoder_motor_class("M2", "INDEX1") # FRONT RIGHT WHEEL
-EM3 = encoder_motor_class("M3", "INDEX1") # BALL BELT
+RightWheel = encoder_motor_class("M1", "INDEX1") # FRONT RIGHT WHEEL
+FeedBelt = encoder_motor_class("M2", "INDEX1") # FRONT LEFT WHEEL
+LeftWheel = encoder_motor_class("M3", "INDEX1") # BALL BELT
 EM4 = encoder_motor_class("M4", "INDEX1")
 SERVO1 = smartservo_class("M1", "INDEX1") # WRIST
 SERVO2 = smartservo_class("M2", "INDEX1") # HAND LEFT
@@ -27,6 +29,7 @@ SERVO3 = smartservo_class("M3", "INDEX1") # HAND RIGHT
 SERVO4 = smartservo_class("M4", "INDEX1") 
 SERVO5 = smartservo_class("M5", "INDEX1")
 SERVO6 = smartservo_class("M6", "INDEX1")
+distance_sensor_1 = ranging_sensor_class("PORT3", "INDEX1")
 
 # map BASIC controls
 BallBeltTG = 'N1'
@@ -38,7 +41,7 @@ ShootTG = 'L2'
 #ArmUp = 'Left' 
 #ArmDown = 'Right'
 BPUp = 'Up'
-BPDown =  ' Down'
+BPDown =  'Down'
 
 """Blueprint right here!
     +=== CONTROLS ===+
@@ -125,33 +128,7 @@ def FlowListener(Mode):
         if flow == 0:
             flow = 1
         else:
-            flow = 0   
-
-def Mover(W1=0, W2=0,angle=90):
-    EM1.move(angle,W1)
-    EM2.move(angle,W2)
-    #EM1.set_power(W3)
-    #EM1.set_power(W4)
-
-
-def BotMover(dir,power):
-    MoveElements = ['U','D','L','R']
-    power = int(power)
-    if dir == 'U':
-        Mover(power, power)
-
-    if dir == 'D':
-        Mover(-1 * power, 1 * power)
-
-    if dir == 'L':
-        Mover(power)
-
-    if dir == 'R':
-        Mover(0, power)
-    else:
-        Mover(0, 0, 0, 0)
-        hand_mover(0,0,0)
-    Mover()
+            flow = 0
 
 def hand_mover(v_center,v_left,v_right): # UNRELIABLE, FIX THIS LATER
     SERVO5.move(v_center,10)
@@ -164,82 +141,6 @@ def hand_mover(v_center,v_left,v_right): # UNRELIABLE, FIX THIS LATER
         SERVO4.set_power(0)
     if SERVO6.get_value("current") > limit:
         SERVO6.set_power(0)
-
-def AutomaticMode2():
-    EM1.move(360, 0)
-    #EM2.move(360, 50)
-    EM2.set_speed(-1 * mps_to_rpm(distance_and_time_to_speed(angle_to_distance(90,0.5),0.5))) #turn 90 cw degree+
-    time.sleep(0.5)
-    EM1.set_speed(mps_to_rpm(distance_and_time_to_speed(0.26,1))) #moves foward 26 cm
-    EM2.set_speed(-1 * mps_to_rpm(distance_and_time_to_speed(0.26,1)))
-    time.sleep(1)
-    EM1.set_speed(0)
-    EM2.set_speed(-1 * mps_to_rpm(distance_and_time_to_speed(angle_to_distance(90,0.5),0.5))) #turn -90 degree+
-    time.sleep(0.5)
-    #put the hand up
-    power_expand_board.set_power("DC7", -1 * 10) # Flag
-    hand_mover(0,100,100)
-    time.sleep(1)
-    hand_mover(0,0,0)
-    time.sleep(4)
-    power_expand_board.set__power("DC7",-2)
-    EM1.set_speed(mps_to_rpm(distance_and_time_to_speed(1.80,5))) #moves foward 26 cm
-    EM2.set_speed(-1 * mps_to_rpm(distance_and_time_to_speed(1.80,5)))
-    time.sleep(5)
-    EM1.set_speed(0) #moves foward 26 cm
-    EM2.set_speed(0)
-    EM2.set_speed(-1 * mps_to_rpm(distance_and_time_to_speed(angle_to_distance(90,0.5),0.5))) #turn 90 cw degree+
-    time.sleep(0.5)
-
-def AutomaticMode():
-    """25: 15cm/sec
-    50: 30cm/sec
-    100: 60cm/sec
-    Based on NETtoSan's calculations."""
-    EM1.set_speed(0)
-    EM2.set_speed(mps_to_rpm(distance_and_time_to_speed(angle_to_distance(17.39,0.5),0.5))) #turn 17.39 degree+
-    #BotMover('R',mps_to_rpm(distance_and_time_to_speed(angle_to_distance(17.39),0.5)))
-    time.sleep(0.5)
-    EM1.set_speed(mps_to_rpm(distance_and_time_to_speed(0.87,1))) #moves foward 87 cm
-    EM2.set_speed(mps_to_rpm(distance_and_time_to_speed(0.87,1)))
-    #BotMover('U',)
-    time.sleep(1)
-    EM3.set_speed(90)
-    power_expand_board.set_power("DC3", 100)
-    time.sleep(5)
-    EM3.set_power(-0)
-    power_expand_board.set_power("DC3", -0)
-    EM1.set_speed(mps_to_rpm(distance_and_time_to_speed(angle_to_distance(17.39,0.5),0.125)))
-    EM2.set_speed(0)
-    time.sleep(0.125)
-    #EM1.set_speed(-1*mps_to_rpm(distance_and_time_to_speed(0.25,1)))
-    #EM2.set_speed(-1*mps_to_rpm(distance_and_time_to_speed(0.25,1)))
-    #time.sleep(1)
-    EM1.set_speed(mps_to_rpm(distance_and_time_to_speed(angle_to_distance(17.39,0.5),0.125)))
-    time.sleep(0.125)
-    EM1.set_speed(-1*mps_to_rpm(distance_and_time_to_speed(0.10,1)))
-    EM2.set_speed(-1*mps_to_rpm(distance_and_time_to_speed(0.10,1)))
-    time.sleep(1)
-    EM1.set_speed(0)
-    EM2.set_speed(mps_to_rpm(distance_and_time_to_speed(angle_to_distance(17.39,0.5),0.5))) #turn 17.39 degree+
-    #BotMover('R',mps_to_rpm(distance_and_time_to_speed(angle_to_distance(17.39),0.5)))
-    time.sleep(0.5)
-    EM3.set_power(90)
-    power_expand_board.set_power("DC3", 100)
-    power_expand_board.set_power("BL1", BP)
-    power_expand_board.set_power("BL2", BP)
-    
-    '''
-    #smaller triangle here
-    #large triangle below
-    for i in range(-10,45,5): # roughly a triangle (18 cycles) 
-        mybppower = velocity_to_power(vel_from_angle_distance(i,3.96))
-        power_expand_board.set_power("BL1", mybppower)
-        power_expand_board.set_power("BL2", mybppower)
-        time.sleep(1)
-        EM1.set_speed(mps_to_rpm(distance_and_time_to_speed(angle_to_distance(17.39),0.5))) # CHANGE HERE!
-        #BotMover() # Reset
-    '''
 
 def ShooterListener(Mode):
     global BP, brushless
@@ -257,11 +158,24 @@ def ShooterListener(Mode):
             pass
 
 def MoveModule():
-    EM1.set_power(0.8*(gamepad.get_joystick("Ly")+(gamepad.get_joystick("Lx")))*inverse/1.5)
-    EM2.set_power(-0.8*(gamepad.get_joystick("Ly")-(gamepad.get_joystick("Lx")))*inverse/1.5)
+    sensitivity = 1.5
+    #if inverse == -1 :
+    #    RightWheel.set_power(0.8*(gamepad.get_joystick("Ly")-(gamepad.get_joystick("Lx")))/sensitivity)
+    #    LeftWheel.set_power(-0.8*(gamepad.get_joystick("Ly")+(gamepad.get_joystick("Lx")))/sensitivity)
+    #else :
+    #    LeftWheel.set_power(0.8*(gamepad.get_joystick("Ly")-(gamepad.get_joystick("Lx")))/sensitivity)
+    #    RightWheel.set_power(-0.8*(gamepad.get_joystick("Ly")+(gamepad.get_joystick("Lx")))/sensitivity)
+
+    if inverse == -1 :
+        RightWheel.set_power(0.8*(gamepad.get_joystick("Ly"))/sensitivity)
+        LeftWheel.set_power(-0.8*(gamepad.get_joystick("Ly"))/sensitivity)
+    else :
+        LeftWheel.set_power(0.8*(gamepad.get_joystick("Ly"))/sensitivity)
+        RightWheel.set_power(-0.8*(gamepad.get_joystick("Ly"))/sensitivity)
     
-    #rotating a hand 
-    hand_mover(gamepad.get_joystick("Rx"),0,0)
+    #rotating a hand
+    if abs(gamepad.get_joystick("Rx")) == 100:
+        hand_mover(gamepad.get_joystick("Rx")/25,0,0)
 
     # Move hand up/down
     power_expand_board.set_power("DC2",gamepad.get_joystick("Ry")*-1)
@@ -271,156 +185,83 @@ def MoveModule():
         hand_mover(0,100*10,-100*10)
     if gamepad.is_key_pressed('Right'):
         hand_mover(0,-100*10,100*10)
+
+
+ranging_value = 0
+steps = 0
+origin_angle = 0 
+def movevl(v1,v2):
+    LeftWheel.set_power(v1)
+    RightWheel.set_power(-v2)
+
+def autoshoot():
+    ison = True
+    steps = 0
+    power_expand_board.set_power("DC1",-70)
+
+    # Move to ball zone
+    time.sleep(1)
+    movevl(-50,50)
+    time.sleep(0.25)     
+    movevl(50,50)
+    time.sleep(0.6)
+    movevl(50,-50)
+    time.sleep(0.35)
+
+    # Collect ball
+    movevl(50,50)  # get ball
+    time.sleep(0.7)
+    movevl(-50,-50) # go back
+    time.sleep(0.5)
+    movevl(0,0)
     
+    # SHOOT BALL . WAIT BALL TO GET NEAR RANGING SENSOR
+    while ison:
+        ranging_value = float(distance_sensor_1.get_distance())
+        FeedBelt.set_power(-100)
+        if ranging_value < 10:
+            power_expand_board.set_power("BL1",50)
+            power_expand_board.set_power("BL2",50)
+            FeedBelt.set_power(-100)
+            time.sleep(2.5) # CHANGE HERE
+            movevl(-50,50) 
+            time.sleep(0.5) # CHANGE HERE
+            movevl(50,-50)
+            time.sleep(0.5)
+            movevl(0,0)
+            ison = False
+        steps += 1
+        time.sleep(0.5)
+        if steps == 20 :
+            movevl(5,5) 
+            time.sleep(0.5)
+            movevl(0,0)
+        elif steps >= 40:
+            ison = False
+            break
+    '''
+    while steps < 3: #ranging_value is 0:
+        
+        ranging_value = float(distance_sensor_1.get_distance())
+        if ranging_value < 10:
+            power_expand_board.set_power("BL1",50)
+            power_expand_board.set_power("BL2",50)
+            FeedBelt.set_power(-100)
+            time.sleep(2.5)
+            movevl(-50,50)
+            time.sleep(0.15)
+            movevl(0,0)
 
-def autoController (Angle, Time, Distance, Motor, inverse):
-    EM1.set_speed(0)
-    EM2.set_speed(0)
-    localdistance = Distance
-    if Angle == 0 :
-        EM2.set_speed(mps_to_rpm(distance_and_time_to_speed(Distance,Time)))
-        EM1.set_speed(-1 * mps_to_rpm(distance_and_time_to_speed(Distance,Time)))
-        time.sleep(float(Time))
-        EM1.set_speed(0)
-        EM2.set_speed(0)
-    else :
-        if not Angle == 0:
-            localdistance = (Angle / 180) * (0.3 * 0.5)
-
-        localspeed = localdistance / Time
-        localrpm = (60 * localspeed) / (2 * (3.1452 * 0.029))
-        if Motor == 1:
-            EM1.set_speed(localrpm)
-
-        if Motor == 2:
-            if inverse:
-                EM2.set_speed(localrpm * -1)
-
-            else:
-                EM2.set_speed(localrpm)
-
-        time.sleep(float(Time))
-        EM1.set_speed(0)
-        EM2.set_speed(0)
-
-def autoRotate (Angle, Time, Dir):
-    if Dir == 'Left':
-        autoController(Angle, Time, 0, 2, 50 == 50)
-
-    if Dir == 'Right':
-        autoController(Angle, Time, 0, 1, 1 == 50)
-
-def autoWalk (Distance, Time, Inverse):
-    autoController(0, Time, Distance, 1, Inverse)
-    autoController(0, Time, Distance, 2, Inverse)
-    
-def testAuto(): # Auto functions check
-    autoRotate(17.39, 0.5, 'Left')
-    autoRotate(-17.39, 0.5, 'Left')
-    time.wait(3)
-    autoWalk(1, 1, None)
-    autoWalk(1, 1, True)
-
-def autoshoot (): # LEFT
-    time.sleep(0.001)
-    autoRotate(17.39, 0.5, 'Left')
-    autoWalk(0.87, 1, None)
-    power_expand_board.set_power("DC3", 100)
-    EM3.set_power(-100)
-    time.sleep(2)
-    power_expand_board.set_power("DC3", 0)
-    EM3.set_power(0)
-    autoRotate(-17.39, 0.5, 'Left')
-    autoWalk(-0.1, 0.5, None)
-    # start
-    autoRotate(-5.19, 0.5, 'Left')
-    EM3.set_power(-100)
-    power_expand_board.set_power("BL1", velocity_to_power(vel_from_angle_distance(5.19,291.5)))
-    power_expand_board.set_power("BL2", velocity_to_power(vel_from_angle_distance(5.19,291.5)))
-    # start (STABLE)
-    autoRotate(5.19, 0.5, 'Left')
-    autoWalk(0.1, 0.5, None)
+            steps += 1
+        else:
+            FeedBelt.set_power(-50)
+            power_expand_board.set_power("BL1",0)
+            power_expand_board.set_power("BL2",0)
+    '''
     power_expand_board.set_power("BL1", 0)
     power_expand_board.set_power("BL2", 0)
-    power_expand_board.set_power("DC3", 100)
-    EM3.set_power(-100)
-    time.sleep(2)
-    power_expand_board.set_power("DC3", 0)
-    EM3.set_power(0)
-    autoWalk(-0.1, 0.5, None)
-    # start
-    autoRotate(5.19, 0.5, 'Left')
-    EM3.set_power(-100)
-    power_expand_board.set_power("BL1", velocity_to_power(vel_from_angle_distance(5.19,291.5)))
-    power_expand_board.set_power("BL2", velocity_to_power(vel_from_angle_distance(5.19,291.5)))
-    # start (STABLE)
-    autoRotate(-5.19, 0.5, 'Left')
-    autoWalk(0.1, 0.5, None)
-    power_expand_board.set_power("BL1", 0)
-    power_expand_board.set_power("BL2", 0)
-    power_expand_board.set_power("DC3", 100)
-    EM3.set_power(-100)
-    time.sleep(2)
-    power_expand_board.set_power("DC3", 0)
-    EM3.set_power(0)
-    autoWalk(-0.1, 0.5, None)
-    # start
-    autoRotate(12.97, 0.5, 'Left')
-    EM3.set_power(-100)
-    power_expand_board.set_power("BL1", velocity_to_power(vel_from_angle_distance(12.97,291.5)))
-    power_expand_board.set_power("BL2", velocity_to_power(vel_from_angle_distance(12.97,291.5)))
-    # start (STABLE)
-    autoRotate(-12.97, 0.5, 'Left')
-    autoWalk(0.1, 0.5, None)
-    power_expand_board.set_power("BL1", 0)
-    power_expand_board.set_power("BL2", 0)
-    power_expand_board.set_power("DC3", 100)
-    EM3.set_power(-100)
-    time.sleep(2)
-    power_expand_board.set_power("DC3", 0)
-    EM3.set_power(0)
-    autoWalk(-0.1, 0.5, None)
-    # start
-    autoRotate(23.87, 0.5, 'Left')
-    EM3.set_power(-100)
-    power_expand_board.set_power("BL1", velocity_to_power(vel_from_angle_distance(23.87,291.5)))
-    power_expand_board.set_power("BL2", velocity_to_power(vel_from_angle_distance(23.87,291.5)))
-    # start (STABLE)
-    autoRotate(-23.87, 0.5, 'Left')
-    autoWalk(0.1, 0.5, None)
-    power_expand_board.set_power("BL1", 0)
-    power_expand_board.set_power("BL2", 0)
-    power_expand_board.set_power("DC3", 100)
-    EM3.set_power(-100)
-    time.sleep(2)
-    power_expand_board.set_power("DC3", 0)
-    EM3.set_power(0)
-    autoWalk(-0.1, 0.5, None)
-    # start
-    autoRotate(31.22, 0.5, 'Left')
-    EM3.set_power(-100)
-    power_expand_board.set_power("BL1", velocity_to_power(vel_from_angle_distance(31.22,291.5)))
-    power_expand_board.set_power("BL2", velocity_to_power(vel_from_angle_distance(31.22,291.5)))
-    # start (STABLE)
-    autoRotate(-31.22, 0.5, 'Left')
-    autoWalk(0.1, 0.5, None)
-    power_expand_board.set_power("BL1", 0)
-    power_expand_board.set_power("BL2", 0)
-    power_expand_board.set_power("DC3", 100)
-    EM3.set_power(-100)
-    time.sleep(2)
-    power_expand_board.set_power("DC3", 0)
-    EM3.set_power(0)
-    autoWalk(-0.1, 0.5, None)
-    # start
-    autoRotate(38.87, 0.5, 'Left')
-    EM3.set_power(-100)
-    power_expand_board.set_power("BL1", velocity_to_power(vel_from_angle_distance(38.87,291.5)))
-    power_expand_board.set_power("BL2", velocity_to_power(vel_from_angle_distance(38.87,291.5)))
-    # start (STABLE)
-    autoRotate(-38.87, 0.5, 'Left')
-    autoWalk(0.1, 0.5, None)
-
+    power_expand_board.stop("DC1")
+    FeedBelt.set_power(0)
 # ================= Main Program ===================== #
 
 while True:
@@ -429,32 +270,32 @@ while True:
     power_expand_board.set_power("DC7", -1 * (gamepad.get_joystick("Rx") / 10)) # Flag
     if gamepad.is_key_pressed(RotateR): # Rotate Bot Right
         while not not gamepad.is_key_pressed(RotateR):
-            EM1.set_power(45)
-            EM2.set_power(45)
+            LeftWheel.set_power(45)
+            RightWheel.set_power(45)
 
-        EM1.set_power(0)
-        EM2.set_power(0)
+        LeftWheel.set_power(0)
+        RightWheel.set_power(0)
 
     if gamepad.is_key_pressed(RotateL): # Rotate Bot Left
         while not not gamepad.is_key_pressed(RotateL):
             time.sleep(0.001)
-            EM1.set_power(-45)
-            EM2.set_power(-45)
+            LeftWheel.set_power(-45)
+            RightWheel.set_power(-45)
 
-        EM1.set_power(0)
-        EM2.set_power(0)
+        LeftWheel.set_power(0)
+        RightWheel.set_power(0)
 
     if gamepad.is_key_pressed(ShootTG): # Toggle Shoot
         ShooterListener(1)
         
     if gamepad.is_key_pressed(BPUp): # Brushless power up
-        if BP == 25:
-            BP = 40
+        if BP != 50:
+            BP = 50
         while not not gamepad.is_key_pressed(BPUp):
             pass
 
     if gamepad.is_key_pressed(BPDown): # Brushless power down
-        if BP == 40:
+        if BP != 25:
             BP = 25
         while not not gamepad.is_key_pressed(BPDown):
             pass
@@ -475,18 +316,22 @@ while True:
         if manual_automatic_mode == 1:
             manual_automatic_mode = 0
             autoshoot()
-    
     if gamepad.is_key_pressed('N3'): # Rotate ball belt manually <Hold>
         while not not gamepad.is_key_pressed('N3'):
             time.sleep(0.001)
-            EM3.set_power(inverse2*100)
-        EM3.set_power(0)
+            FeedBelt.set_power(inverse2*100)
+        FeedBelt.set_power(0)
+
+    if gamepad.is_key_pressed('R2'): # Rotate ball belt manually <Hold>
+        inverse = inverse*-1
+        while not not gamepad.is_key_pressed('R2'):
+            pass
 
     #Check values
     if flow == 1:
-            power_expand_board.set_power("DC3", inverse2*100)
+            power_expand_board.set_power("DC1", inverse2*100)
     else:
-        power_expand_board.set_power("DC3", 0)
+        power_expand_board.set_power("DC1", 0)
 
     if brushless == 1:
         power_expand_board.set_power("BL1", BP)

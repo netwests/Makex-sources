@@ -1,4 +1,4 @@
-# codes make you cry
+# code makes you suffer
 import novapi
 import math
 import random
@@ -10,13 +10,12 @@ from mbuild.ranging_sensor import ranging_sensor_class
 
 # initialize mechanic variables
 BP = 40
-SP = 50
 flow = 0
-maxspeedi = 0.25
 brushless = 0
 manual_automatic_mode = 1
 inverse = 1 # 1 to disable
 inverse2 = 1
+fliparm = 0
 
 # new class
 RightWheel = encoder_motor_class("M1", "INDEX1") # FRONT RIGHT WHEEL
@@ -46,7 +45,7 @@ BPDown =  'Down'
 """Blueprint right here!
     +=== CONTROLS ===+
     Left Joystick ( Analog ): Robot's movement 6 AXIS
-    Right Joystick ( Analog ) RX: Rotate Wrist/Flag
+    Right Joystick ( Analog ) : -
     Right Joystick ( Analog ) RY: Move Arm
     Left Joystick (Click): -
     Right Joystick (Click): -
@@ -59,12 +58,12 @@ BPDown =  'Down'
     BTN1:  Ball Belt Toggle
     BTN2: Invert all belt directions
     BTN3: - 
-    BTN4: -
+    BTN4: Flip Wrist
 
     L1: Rotate Bot Left
     L2: Shooter (Toggle)
     R1: Rotate Bot Right
-    R2: -
+    R2: Rotate Ball Belt manually
 
     +: Automatic Mode
     =========== CONNECTIONS =============
@@ -84,9 +83,9 @@ BPDown =  'Down'
     SERVO6: Right Hand
     NovaPi Extension Board
     DC1: -
-    DC2: Arm Belt
+    DC2: Arm Belt / Flag Mover
     DC3: Front Belt
-    DC7: Flag
+    DC7: -
     DC8: -
     BL1: Shooter
     BL2: Shooter
@@ -131,12 +130,11 @@ def FlowListener(Mode):
             flow = 0
 
 def hand_mover(v_center,v_left,v_right): # UNRELIABLE, FIX THIS LATER
-    SERVO5.move(v_center,10)
-    SERVO4.move(-1*v_left,10)
-    SERVO6.move(v_right,10)
+    SERVO5.move(v_center,20)
+    SERVO4.move(-1*v_left,20)
+    SERVO6.move(v_right,20)
     limit = 1000
-    if SERVO5.get_value("current") > limit:
-        SERVO5.set_power(0)
+    
     if SERVO4.get_value("current") > limit:
         SERVO4.set_power(0)
     if SERVO6.get_value("current") > limit:
@@ -172,19 +170,39 @@ def MoveModule():
     else :
         LeftWheel.set_power(0.8*(gamepad.get_joystick("Ly"))/sensitivity)
         RightWheel.set_power(-0.8*(gamepad.get_joystick("Ly"))/sensitivity)
-    
+    '''
     #rotating a hand
-    if abs(gamepad.get_joystick("Rx")) == 100:
+    if gamepad.get_joystick("Rx") == 100:
         hand_mover(gamepad.get_joystick("Rx")/25,0,0)
+        time.sleep(0.001)
+    '''
 
     # Move hand up/down
-    power_expand_board.set_power("DC2",gamepad.get_joystick("Ry")*-1)
+    invalue = gamepad.get_joystick("Ry")*-1
+    if invalue is 0:
+        invalue = -10
+    else:
+        gamepad.get_joystick("Ry")*-1
+    power_expand_board.set_power("DC2",invalue)
 
     # Hand gripper
     if gamepad.is_key_pressed('Left'):
-        hand_mover(0,100*10,-100*10)
-    if gamepad.is_key_pressed('Right'):
-        hand_mover(0,-100*10,100*10)
+        hand_mover(0,100,-100)
+    elif gamepad.is_key_pressed('Right'):
+        hand_mover(0,-100,100)
+    else:
+        hand_mover(0,0,0)
+
+        if gamepad.is_key_pressed("N4"): # Flip Arm
+            if fliparm == 0:
+                SERVO5.move_to(-180,50)
+                fliparm = 1
+            else:
+                SERVO5.move_to(180,50)
+                fliparm = 0
+
+            while not not gamepad.is_key_pressed("N4"):
+                pass
 
 
 ranging_value = 0
@@ -193,6 +211,30 @@ origin_angle = 0
 def movevl(v1,v2):
     LeftWheel.set_power(v1)
     RightWheel.set_power(-v2)
+
+def autocube():
+    ison = True
+    steps = 0
+    # Move away from ball zone
+    time.sleep(1)
+    movevl(-90,90)
+    time.sleep(0.25)     
+    movevl(50,50)
+    time.sleep(0.6)
+    movevl(90,-90)
+    time.sleep(0.35)
+
+    # Collect cube
+    movevl(50,50)  # goto cube
+
+
+
+
+    time.sleep(0.7)
+    movevl(-25,-25) # go back
+    time.sleep(0.5)
+    movevl(0,0)
+    pass
 
 def autoshoot():
     ison = True
@@ -209,9 +251,9 @@ def autoshoot():
     time.sleep(0.35)
 
     # Collect ball
-    movevl(50,50)  # get ball
+    movevl(25,25)  # get ball
     time.sleep(0.7)
-    movevl(-50,-50) # go back
+    movevl(-25,-25) # go back
     time.sleep(0.5)
     movevl(0,0)
     
@@ -289,14 +331,14 @@ while True:
         ShooterListener(1)
         
     if gamepad.is_key_pressed(BPUp): # Brushless power up
-        if BP != 50:
-            BP = 50
+        if BP != 30:
+            BP = 30
         while not not gamepad.is_key_pressed(BPUp):
             pass
 
     if gamepad.is_key_pressed(BPDown): # Brushless power down
-        if BP != 25:
-            BP = 25
+        if BP != 15:
+            BP = 15
         while not not gamepad.is_key_pressed(BPDown):
             pass
    
@@ -306,7 +348,7 @@ while True:
         while not not gamepad.is_key_pressed(BallBeltTG):
             pass
 
-    if gamepad.is_key_pressed(BallBeltINV):
+    if gamepad.is_key_pressed(BallBeltINV): #Ball Belt Inverse <Toggle>
         time.sleep(0.001)
         inverse2 = inverse2* -1
         while not not gamepad.is_key_pressed(BallBeltINV):
